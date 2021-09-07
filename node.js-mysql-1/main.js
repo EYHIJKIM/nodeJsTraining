@@ -32,14 +32,24 @@ var app = http.createServer(function(request,response){
         //   response.end(html);
         // });
         db.query('SELECT * FROM topic;', function (error, topics) {
-          console.log(topics);
-          response.writeHead(200);
-          response.end('Success');
+         var title = 'Welcome';
+         var description = 'Hello, Node.js';
+         //DB에서 가져온 리스트를 그대로 넘겨준다.
+         var list = template.list(topics);
+         var html = template.HTML(title, list,
+               `<h2>${title}</h2>${description}`,
+               `<a href="/create">create</a>`
+             );
+          response.writeHead(200);  
+          response.end(html);
         });
 
 
 
-      } else {
+      } else { //queryString이 있을 때
+        
+
+        /*
         fs.readdir('./data', function(error, filelist){
           var filteredId = path.parse(queryData.id).base;
           fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
@@ -62,7 +72,10 @@ var app = http.createServer(function(request,response){
             response.end(html);
           });
         });
+      */
+      
       }
+
     } else if(pathname === '/create'){
       fs.readdir('./data', function(error, filelist){
         var title = 'WEB - create';
