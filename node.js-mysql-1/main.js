@@ -31,7 +31,7 @@ var app = http.createServer(function(request,response){
         //   response.writeHead(200);
         //   response.end(html);
         // });
-        db.query('SELECT * FROM topic;', function (error, topics) {
+        db.query('SELECT * FROM topic', function (error, topics) {
          var title = 'Welcome';
          var description = 'Hello, Node.js';
          //DB에서 가져온 리스트를 그대로 넘겨준다.
@@ -47,7 +47,7 @@ var app = http.createServer(function(request,response){
 
 
       } else { //queryString이 있을 때
-        
+
 
         /*
         fs.readdir('./data', function(error, filelist){
@@ -68,11 +68,41 @@ var app = http.createServer(function(request,response){
                   <input type="submit" value="delete">
                 </form>`
             );
-            response.writeHead(200);
+             response.writeHead(200);
             response.end(html);
           });
         });
       */
+        db.query('SELECT * FROM topic', function (error, topics) {
+          if(error) {
+            throw error;
+          }
+          
+          //자동 매핑해줌
+          db.query(`SELECT * FROM TOPIC WHERE id=?`,[queryData.id],function(err2, topic) {
+            if(err2) {
+              throw err2;
+            }
+          
+            var title = topic[0].title;
+            var description = topic[0].description;
+            //DB에서 가져온 리스트를 그대로 넘겨준다.
+            var list = template.list(topics);
+            var html = template.HTML(title, list,
+                  `<h2>${title}</h2>${description}`,
+                  ` <a href="/create">create</a>
+                  <a href="/update?id=${queryData.id}">update</a>
+                  <form action="delete_process" method="post">
+                    <input type="hidden" name="id" value="${queryData.id}">
+                    <input type="submit" value="delete">
+                  </form>`
+             );//html
+
+          response.writeHead(200);  
+          response.end(html);
+          });
+        });
+        
       
       }
 
