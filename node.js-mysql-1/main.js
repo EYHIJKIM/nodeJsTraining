@@ -107,38 +107,118 @@ var app = http.createServer(function(request,response){
       }
 
     } else if(pathname === '/create'){
-      fs.readdir('./data', function(error, filelist){
+
+      db.query(`SELECT * FROM topic`,function(error,topics){
+        var list = template.list(topics);
         var title = 'WEB - create';
-        var list = template.list(filelist);
-        var html = template.HTML(title, list, `
-          <form action="/create_process" method="post">
-            <p><input type="text" name="title" placeholder="title"></p>
-            <p>
-              <textarea name="description" placeholder="description"></textarea>
-            </p>
-            <p>
-              <input type="submit">
-            </p>
-          </form>
-        `, '');
+        var content = `<form action="/create_process" method="post">
+                          <p><input type="text" name="title" placeholder="title"></p>
+                          <p>
+                            <textarea name="description" placeholder="description"></textarea>
+                          </p>
+                          <p>
+                            <input type="submit">
+                          </p>
+                        </form>`;
+
+        var html = template.HTML(title, list, content,'');
         response.writeHead(200);
         response.end(html);
-      });
+      });//
+        /*
+          fs.readdir('./data', function(error, filelist){
+            var title = 'WEB - create';
+            var list = template.list(filelist);
+            var html = template.HTML(title, list, `
+              <form action="/create_process" method="post">
+                <p><input type="text" name="title" placeholder="title"></p>
+                <p>
+                  <textarea name="description" placeholder="description"></textarea>
+                </p>
+                <p>
+                  <input type="submit">
+                </p>
+              </form>
+            `, '');
+            response.writeHead(200);
+            response.end(html);
+          });
+        */
     } else if(pathname === '/create_process'){
-      var body = '';
-      request.on('data', function(data){
-          body = body + data;
-      });
-      request.on('end', function(){
+        /*
+        var body = '';
+        request.on('data', function(data){
+            body = body + data;
+        });
+        request.on('end', function(){
+            var post = qs.parse(body);
+            var title = post.title;
+            var description = post.description;
+            fs.writeFile(`data/${title}`, description, 'utf8', function(err){
+              response.writeHead(302, {Location: `/?id=${title}`});
+              response.end();
+            })
+        });
+        */
+        var body = '';
+        request.on('data', function(data){
+          body += data;
+        });
+
+        request.on('end',function(){
+          debugger;
           var post = qs.parse(body);
           var title = post.title;
           var description = post.description;
-          fs.writeFile(`data/${title}`, description, 'utf8', function(err){
-            response.writeHead(302, {Location: `/?id=${title}`});
+
+          db.query(`INSERT INTO topic (title,description,created,author_id) VALUES (?,?,NOW(),?)`,[title,description,1],function(err, output){
+            console.log(output);
+            if(err) {
+              throw err;
+            }
+            response.writeHead(302, {Location: `/?id=${output.insertId}`});
             response.end();
-          })
-      });
+          
+
+          });
+        });
+
+
+
     } else if(pathname === '/update'){
+      db.query(`SELECT * FROM topic`,function(err,resultList){
+        if(err) throw err;
+        var list = template.list(resultList);
+
+        db.query(`SELECT * FROM topic WHERE id=?`,[queryData.id],
+          function(err2, resultSelect){
+            if(err2) throw err2;
+            console.log(resultSelect);
+            var title = resultSelect[0].title;
+            var description = resultSelect[0].description;
+            var body = 
+              `
+              <form action="/update_process" method="post">
+                <input type="hidden" name="id" value="${queryData.id}">
+                <p><input type="text" name="title" placeholder="title" value="${title}"></p>
+                <p>
+                  <textarea name="description" placeholder="description">${description}</textarea>
+                </p>
+                <p>
+                  <input type="submit">
+                </p>
+              </form>
+              `;
+            var html = template.HTML(title,list,body,'');
+            response.writeHead(200);
+            response.end(html);
+          
+          });
+
+      });
+
+     
+      /*
       fs.readdir('./data', function(error, filelist){
         var filteredId = path.parse(queryData.id).base;
         fs.readFile(`data/${filteredId}`, 'utf8', function(err, description){
@@ -163,6 +243,7 @@ var app = http.createServer(function(request,response){
           response.end(html);
         });
       });
+      */
     } else if(pathname === '/update_process'){
       var body = '';
       request.on('data', function(data){
@@ -170,16 +251,28 @@ var app = http.createServer(function(request,response){
       });
       request.on('end', function(){
           var post = qs.parse(body);
+          console.log(post);
           var id = post.id;
           var title = post.title;
           var description = post.description;
+          
+          db.query(`UPDATE topic SET title=?, description=? WHERE id=?`,[title,description,id],
+            function(err,result){
+              console.log(`result:${result}`);
+              if(err) throw err;
+              response.writeHead(302, {Location: `/?id=${id}`});
+              response.end();    
+          });
+          
+          /*
           fs.rename(`data/${id}`, `data/${title}`, function(error){
             fs.writeFile(`data/${title}`, description, 'utf8', function(err){
               response.writeHead(302, {Location: `/?id=${title}`});
               response.end();
             })
           });
-      });
+          */
+        });
     } else if(pathname === '/delete_process'){
       var body = '';
       request.on('data', function(data){
@@ -188,11 +281,20 @@ var app = http.createServer(function(request,response){
       request.on('end', function(){
           var post = qs.parse(body);
           var id = post.id;
-          var filteredId = path.parse(id).base;
+          //var filteredId = path.parse(id).base;
+          db.query(`DELETE FROM topic WHERE id=?`,[id],function(err,result){
+            if(err) throw err;
+            response.writeHead(302, {Location: `/`});
+            response.end();
+          });
+
+
+          /*
           fs.unlink(`data/${filteredId}`, function(error){
             response.writeHead(302, {Location: `/`});
             response.end();
           })
+          */
       });
     } else {
       response.writeHead(404);

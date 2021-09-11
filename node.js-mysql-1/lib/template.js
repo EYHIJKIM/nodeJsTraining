@@ -15,7 +15,7 @@ module.exports = {
     </body>
     </html>
     `;
-  },list:function(topics){
+  }, list:function(topics){
     var list = '<ul>';
     var i = 0;
     while(i < topics.length){
