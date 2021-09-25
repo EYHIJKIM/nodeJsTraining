@@ -26,11 +26,16 @@ module.exports = {
     return list;
   },
 
-    authorSelect : function(authors) {
+    authorSelect : function(authors, author_id) {
       var tag = ''
       var i = 0;
       while (i<authors.length) {
-        tag += `<option value="${authors[i].id}">${authors[i].name}</option>`;
+        var selected = '';
+        if(author_id == authors[i].id) {
+          selected = ' selected';
+        }
+          tag += `<option value="${authors[i].id}"${selected}>${authors[i].name}</option>`;
+        
         i++;
       }
       return `<select name="author">${tag}</select>`;
