@@ -1,11 +1,45 @@
 
 const express = require('express')
 const app = express()
+var http = require('http');
+var fs = require('fs');
+var url = require('url');
+var qs = require('querystring');
+var template = require('./lib/template.js');
+var sanitizeHtml = require('sanitize-html');
+
+
 const port = 3000
 
-app.get('/', (req, res) => {
-  res.send('Hello World!')
-})
+//app.get('/', (request, response) => {
+app.get('/',function(request, response){
+  fs.readdir('./data', function(error, filelist){
+    var title = 'Welcome';
+    var description = 'Hello, Node.js';
+    var list = template.list(filelist);
+    var html = template.HTML(title, list,
+      `<h2>${title}</h2>${description}`,
+      `<a href="/create">create</a>`
+    );
+    response.send(html);
+  });
+
+});//END
+
+/*라우팅 파라미터 값을 가져올 때
+예전처럼 쿼리 스트링을 가져오지 않고 다른 문법을 사용
+  >> :pageId 가 파라미터 값임
+  ex) page/HTML 의 경우
+  request.params = {'pageId' : 'HTML' } 이 된다.
+*/
+app.get('/page/:pageId',function(request, response){
+  return response.send(request.params);
+
+
+});
+
+
+
 
 app.listen(port, () => {
   console.log(`Example app listening at http://localhost:${port}`)
