@@ -4,6 +4,7 @@ var db = require('./db');
 var template = require('./template.js');
 var url = require('url');
 var qs = require('querystring');
+var sanitizeHTML = require('sanitize-html');
 
 exports.home = function(request,response){  
     db.query(`SELECT * FROM topic`, function(error,topics){
@@ -36,9 +37,9 @@ exports.page = function(request,response){
          var list = template.list(topics);
          var html = template.HTML(title, list,
            `
-           <h2>${title}</h2>
-           ${description}
-           <p>by ${topic[0].name}</p>
+           <h2>${sanitizeHTML(title)}</h2>
+           ${sanitizeHTML(description)}
+           <p>by ${sanitizeHTML(topic[0].name)}</p>
            `,
            ` <a href="/create">create</a>
                <a href="/update?id=${queryData.id}">update</a>
